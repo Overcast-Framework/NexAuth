@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: carbon;
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #0b0b0b;
+  --color-base-200: #111111;
+  --color-base-300: #181818;
+  --color-base-content: #e5e5e5;
+
+  --color-neutral: #202020;
+  --color-neutral-content: #d4d4d4;
+
+  --color-primary: #d4d4d4;
+  --color-primary-content: #111111;
+
+  --color-secondary: #a3a3a3;
+  --color-secondary-content: #111111;
+
+  --color-accent: #f0f0f0;
+  --color-accent-content: #111111;
+
+  --color-info: #a3a3a3;
+  --color-info-content: #111111;
+
+  --color-success: #86a98a;
+  --color-success-content: #0b0b0b;
+
+  --color-warning: #c2a16a;
+  --color-warning-content: #0b0b0b;
+
+  --color-error: #b98282;
+  --color-error-content: #0b0b0b;
+
+  --radius-btn: 0.6rem;
+  --radius-box: 0.8rem;
+  --radius-input: 0.6rem;
+  --radius-badge: 9999px;
+
+  --border: 1px;
+  --depth: 1;
+  --noise: 8;
+}
+
+@font-face {
+    font-family: "Inter";
+    src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Jetbrains Mono";
+    src: url("/fonts/JetBrainsMono-VariableFont_wght.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    font-family: "Inter", sans-serif;
+}
+
+html, body {
+    font-family: "Inter", sans-serif;
+}
+
+.otp-code {
+    font-family: "JetBrains Mono", monospace;
+}

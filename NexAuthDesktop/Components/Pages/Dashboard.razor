@@ -1,0 +1,184 @@
+﻿@page "/dashboard"
+@inject NexAuth.WalletSession WalletSession
+@inject IJSRuntime JS
+
+<div class="min-h-screen bg-base-100 text-base-content">
+    <header class="flex flex-row items-center border-b border-base-300 bg-base-200 p-2">
+        <button type="button"
+                class="btn bg-base-content ml-auto shadow-lg hover:scale-105 transition p-2 mr-2"
+                @onclick="openRegisterAppModal">
+            <img src="svgs/plus-large.svg" class="w-6 h-6" />
+        </button>
+    </header>
+
+    <main class="mx-auto max-w-4xl gap-1 p-6">
+        @if (!WalletSession!.IsUnlocked)
+        {
+            <p class="font-sans text-base-content">No wallet unlocked.</p>
+        }
+        else
+        {
+            @if (WalletSession!.Wallet!.GetSecrets().Count == 0)
+            {
+                <div class = "card bg-base-content">
+                    <div class="card-body flex flex-row justify-center items-center gap-4 p-6">
+                        <button type="button"
+                                class="btn bg-base-content shadow-lg hover:scale-105 transition p-2"
+                                @onclick="openRegisterAppModal">
+                            <img src="svgs/plus-large.svg" class="w-6 h-6" />
+                        </button>
+                        <p class="font-sans text-base-100">You don't have any applications registered. <br /> Register one.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="flex flex-col gap-4">
+                @foreach (var secret in WalletSession!.Wallet!.GetSecrets())
+                {
+                    <OTPEntry _secretInstance="@secret"/>
+                    <div class="divider"></div>
+                }
+                </div>
+            }
+        }
+
+        <dialog id="registerAppModal" class="modal">
+            <div class="modal-box">
+                <h3 class="text-lg font-sans">Register an application</h3>
+
+                <div class="divider"></div>
+
+                <div class="flex flex-col justify-center items-center p-2">
+                    @if (_showRegError)
+                    {
+                        <div role="alert" class="alert alert-error">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Error! @_regErrorContent</span>
+                        </div>
+                    }
+
+
+                    <p class="font-sans text-base-content text-2xl pb-3">Enter in an OTP URI</p>
+                    <fieldset class="fieldset">
+                        <input type="text" class="input font-sans text-base-content" placeholder="otpauth://..." @bind="_inputURI"/>
+                    </fieldset>
+
+                    <div class="divider">OR</div>
+                    <p class="font-sans text-base-content text-2xl pb-3">Upload a QR Code</p>
+                    <p class="font-sans text-error text-md pb-3">This feature is not currently supported.</p>
+
+                    <div class="divider">Import a secret manually</div>
+
+                    <fieldset class="fieldset">
+                        <p class="font-sans text-base-content text-xl pb-1">Issuer Name</p>
+                        <input type="text" class="input font-sans text-base-content" placeholder="GitHub, Discord, ..." />
+                        <p class="font-sans text-base-content text-xl pb-1">Secret</p>
+                        <input type="password" class="input passwd_slot font-sans text-base-content" placeholder="Enter here..." />
+                    </fieldset>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="modal-action">
+                    <form method="dialog">
+                        <button class="btn btn-success shadow-lg hover:scale-105 transition p-2" @onclick="registerAppButton">Register</button>
+                        <button class="btn shadow-lg hover:scale-105 transition p-2">Close</button>
+                    </form>
+                </div>
+            </div>
+        </dialog>   
+    </main>
+</div>
+
+@code {
+    private string _inputURI = "";
+
+    private bool _showRegError = false;
+    private string _regErrorContent = "";
+
+    private async void openRegisterAppModal()
+    {
+        await JS.InvokeVoidAsync("showModal", "registerAppModal");
+    }
+
+    private async void registerAppButton()
+    {
+        var newSecretInst = new NexAuth.SecretInstance();
+
+        try
+        {
+            if (_inputURI.StartsWith("otpauth://hotp/"))
+            {
+                var parsedURI = NexAuth.OTPAuthParser.ParseHOTP(_inputURI);
+                if (parsedURI is null)
+                    return;
+
+                var label = parsedURI.Value.Label;
+
+                var separator = label.IndexOf(':');
+
+                if (separator >= 0)
+                {
+                    newSecretInst.Issuer = label[..separator];
+                    newSecretInst.Account = label[(separator + 1)..];
+                }
+                else
+                {
+                    newSecretInst.Issuer = "";
+                    newSecretInst.Account = label;
+                }
+                newSecretInst.Secret = parsedURI?.Secret;
+                newSecretInst.Digits = parsedURI.Value.Digits;
+                newSecretInst.Type = NexAuth.OTPType.HOTP;
+                newSecretInst.Period = parsedURI.Value.Period;
+                newSecretInst.Algorithm = parsedURI.Value.Algorithm;
+            }
+            else if (_inputURI.StartsWith("otpauth://totp/"))
+            {
+                var parsedURI = NexAuth.OTPAuthParser.ParseTOTP(_inputURI);
+
+                if (parsedURI is null)
+                    return;
+
+                var label = parsedURI.Value.Label;
+
+                var separator = label.IndexOf(':');
+
+                if (separator >= 0)
+                {
+                    newSecretInst.Issuer = label[..separator];
+                    newSecretInst.Account = label[(separator + 1)..];
+                }
+                else
+                {
+                    newSecretInst.Issuer = "";
+                    newSecretInst.Account = label;
+                }
+                newSecretInst.Secret = parsedURI?.Secret;
+                newSecretInst.Digits = parsedURI.Value.Digits;
+                newSecretInst.Type = NexAuth.OTPType.TOTP;
+                newSecretInst.Period = parsedURI.Value.Period;
+                newSecretInst.Algorithm = parsedURI.Value.Algorithm;
+            }
+            else
+            {
+                _showRegError = true;
+                _regErrorContent = "Invalid OTP URI format";
+            }
+
+            if(WalletSession.IsUnlocked)
+            {
+                WalletSession.Wallet!.AddSecret(newSecretInst);
+                await WalletSession.Wallet!.SaveAsync();
+            }
+        }
+        catch(Exception e)
+        {
+            _showRegError = true;
+            _regErrorContent = e.Message;
+        }
+    }
+}

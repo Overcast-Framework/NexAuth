@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="NexAuth/NexAuth.csproj" />
+  <Project Path="NexAuthDesktop/NexAuthDesktop.csproj" Id="85e29a6d-8e57-47a2-b7a2-2862706860f8">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="NexAuthWeb/NexAuthWeb.csproj" />
+</Solution>

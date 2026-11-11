@@ -1,0 +1,59 @@
+﻿@rendermode InteractiveServer
+@inject NexAuth.WalletSession WalletSession
+
+<div class="card bg-base-100">
+    <div class="card-body flex flex-row justify-center items-center w-full min-w-0 gap-4 p-6">
+        <div class="min-w-0 flex-1">
+            @if(_secretInstance.Issuer != String.Empty)
+            {
+                <p class="font-sans text-base-content text-xl truncate">@_secretInstance.Issuer</p>
+            }
+            <p class="font-sans text-base-content text-lg opacity-70 truncate">@_secretInstance.Account</p>
+        </div>
+        <button class="btn btn-ghost ml-2 shrink-0">
+            ⋮
+        </button>
+        <label class="otp">
+            @for (int i = 0; i < @_secretInstance.Digits; i++)
+            {
+                <span></span>
+            }
+            <input type="text" class="" autocomplete="one-time-code" inputmode="numeric" maxlength=@_secretInstance.Digits pattern="[0-9]{6}" value="@OTPCode" readonly required />
+        </label>
+        <div class="radial-progress"
+             style="--value:@TimerPercentage;"
+             role="progressbar"
+             aria-valuenow="@TimerPercentage">
+            @RemainingSeconds
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public required NexAuth.SecretInstance _secretInstance { get; set; }
+
+    private int RemainingSeconds =>
+    30 - (int)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() % _secretInstance.Period);
+
+    private int TimerPercentage =>
+        (int)(RemainingSeconds / (float)_secretInstance.Period * 100);
+
+    public string OTPCode => NexAuth.OTPGenerator.GenerateFromSecretInstance(_secretInstance);
+    public string Label => _secretInstance.Issuer == string.Empty ? _secretInstance.Account : _secretInstance.Issuer;
+
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(_ =>
+        {
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "theme-change": "^3.0.4"
+  },
+  "devDependencies": {
+    "daisyui": "^5.7.18"
+  }
+}
